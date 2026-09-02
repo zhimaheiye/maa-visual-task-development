@@ -1,0 +1,55 @@
+{
+  "task": "example-task",
+  "start_state": "A",
+  "goal_state": "A_return",
+  "semantics": {
+    "one_round": "Define what counts as one complete business round here",
+    "repeat_param": "Optional user-facing repeat parameter meaning"
+  },
+  "states": [
+    {
+      "state": "A",
+      "name": "Example start state",
+      "recognition": {
+        "type": "OCR",
+        "expected": "开始",
+        "recommended_roi": [0, 0, 0, 0],
+        "variants": [
+          {
+            "name": "default",
+            "screenshot": "screenshots/A_001.png",
+            "bbox": [0, 0, 0, 0]
+          }
+        ]
+      },
+      "action": {
+        "type": "ClickRecognitionResult"
+      },
+      "result_candidates": ["B"]
+    },
+    {
+      "state": "B",
+      "name": "Example next state",
+      "recognition": {
+        "type": "OCR",
+        "expected": "继续",
+        "recommended_roi": [0, 0, 0, 0],
+        "variants": []
+      },
+      "action": {
+        "type": "ClickRecognitionResult"
+      },
+      "result_candidates": ["A_return", "UNKNOWN"]
+    }
+  ],
+  "unknown_states": [],
+  "timing": [
+    {
+      "from": "A",
+      "to": "B",
+      "action_to_first_change_ms": null,
+      "action_to_stable_detect_ms": null
+    }
+  ],
+  "notes": []
+}

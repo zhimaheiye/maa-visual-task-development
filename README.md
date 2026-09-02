@@ -10,8 +10,9 @@
 
 - 新增签到、领奖、领取、菜单操作、日常任务等视觉自动化流程；
 - 用户知道人工步骤，但不想自己截图、量 ROI、写大量 Pipeline；
+- 用户只能提供基于记忆的业务描述，实际 UI 需要 Agent 逐步实机确认；
 - 希望把便宜 Agent 用在“跑腿和测试”，把昂贵模型用在真正需要推理的部分；
-- 开发过程中存在动画、分支、循环、OCR 分框、多视觉布局等情况。
+- 开发过程中存在动画、分支、循环、OCR 分框、多视觉布局、移动目标或长链路低概率状态等情况。
 
 ## 仓库结构
 
@@ -22,12 +23,13 @@
 ├─ references/
 │  ├─ exploration.md
 │  ├─ troubleshooting.md
-│  └─ open-shell-case-study.md
+│  ├─ open-shell-case-study.md
+│  └─ friend-gem-case-study.md
 └─ assets/
    └─ flow.example.json
 ```
 
-`SKILL.md` 是主入口；详细规则拆到 `references/`，减少主 Skill 的长度。
+`SKILL.md` 是主入口；详细规则和真实案例拆到 `references/`，减少主 Skill 的长度。
 
 ## 核心工作流
 
@@ -46,6 +48,57 @@
     ↓
 失败证据回流并局部修正
 ```
+
+## Completed Case Studies
+
+### 1. MaaHappyFish「开贝壳」
+
+见：[`references/open-shell-case-study.md`](references/open-shell-case-study.md)
+
+主要验证：
+
+- “一次任务”的业务语义不能靠截图猜；
+- 动作后的真实状态转移必须实机确认；
+- 一个业务状态可以存在多个 visual variants；
+- PP-OCR 可能把完整按钮文案拆成多个文本框；
+- OCR `expected` 应优先选择单个文本框内稳定且足够唯一的最小语义片段；
+- 本地失败截图应直接注入远端对话，让高能力模型看到真实现场。
+
+### 2. MaaHappyFish「好友摸宝」
+
+见：[`references/friend-gem-case-study.md`](references/friend-gem-case-study.md)
+
+稳定实现基线：`MaaHappyFish@867ddeb`。
+
+这个案例进一步验证：
+
+- 用户的模糊记忆适合作为探索提示，而不是 UI 真相；
+- 显眼视觉元素不一定具有业务意义；
+- UI 数字可能延迟刷新，不能直接拿同页静态显示判断动作是否成功；
+- 局部 Exhausted 与全局 Done 必须区分作用域；
+- 移动目标可以通过高速抓帧测量消失时延，再据此设置 `post_delay`；
+- 安全 ROI 比无脑全屏 TemplateMatch 更重要；
+- Recognition 尽量保持纯判断，状态变化由明确 Action 驱动；
+- 实机验收应分层：单点实验 → 5 位短跑 → 200 水族箱 / 44.1 分钟完整 E2E；
+- 长链路测试能捕获短跑无法覆盖的低概率系统弹窗；
+- 已实机验证的分支与仅保留骨架的分支必须在文档中区分。
+
+## 三方协作原则
+
+推荐把问题按性质路由：
+
+```text
+实机事实未知
+→ 执行 Agent 自己截图 / OCR / 测试
+
+技术判断未知
+→ 将截图、日志、节点信息交给高能力模型
+
+业务语义未知
+→ 高能力模型确认确实需要业务决策后，再询问用户
+```
+
+目标是减少用户充当多 Agent 之间人工路由器的负担，同时避免 AI 擅自发明业务规则。
 
 ## 与 MaaFramework 技术型 Skill 的关系
 
@@ -66,14 +119,17 @@ Subdirectory: 留空 / 仓库根目录
 
 ## 当前状态
 
-第一版基于真实的 MaaHappyFish“开贝壳”任务开发过程整理，已经纳入以下实机踩坑：
+当前版本已经基于两个真实 MaaHappyFish 功能完成端到端案例沉淀：
 
-- 业务上的“一次任务”与 UI 点击次数不是同一个概念；
-- 一个业务状态可以对应多个视觉 variant；
-- OCR 完整按钮文案可能被 PP-OCR 拆成多个文本框；
-- OCR `expected` 应选择单个文本框内稳定、唯一的最小语义片段；
-- 现场 Bug 应先采样，再局部修正，不应先凭猜测增加 fallback；
-- 本地截图路径对远端模型不可见时，应把现场图片直接注入聊天作为证据。
+```text
+开贝壳
+→ 短闭环、多视觉 variant、OCR 分框、循环计数
+
+好友摸宝
+→ 模糊需求、逐步实机探索、移动目标、局部状态、长链路 E2E、长尾弹窗
+```
+
+这些规则来自实际 MaaFramework 资源开发过程，而不是只根据理论文档整理。
 
 ## License
 
